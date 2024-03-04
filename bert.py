@@ -1,4 +1,4 @@
-from typing import OrderedDict, Optional, Tuple
+from typing import OrderedDict, Optional, List, Tuple
 
 from dataclasses import dataclass
 import json
@@ -12,7 +12,9 @@ from transformers.utils.hub import cached_file
 
 @dataclass
 class BertConfig:
+    architectures: Optional[List[str]] = None
     attention_probs_dropout_prob: float = 0.1
+    gradient_checkpointing: Optional[bool] = False
     classifier_dropout: Optional[float] = None
     hidden_act: str = "gelu"
     hidden_dropout_prob: float = 0.1
@@ -287,6 +289,12 @@ class BertModel(torch.nn.Module):
                 continue
 
             new_key = key.replace("bert.", "")
+
+            if "LayerNorm.gamma" in key:
+                new_key = new_key.replace("gamma", "weight")
+            elif "LayerNorm.beta" in key:
+                new_key = new_key.replace("beta", "bias")
+            
             new_state_dict[new_key] = state_dict[key]
 
         # Load model
@@ -298,7 +306,8 @@ class BertModel(torch.nn.Module):
 
 if __name__ == "__main__":
     # Init
-    pretrained_model_name_or_path = "prajjwal1/bert-tiny"
+    # pretrained_model_name_or_path = "prajjwal1/bert-tiny"
+    pretrained_model_name_or_path = "google-bert/bert-base-uncased"
 
     # Tokenizer
     tokenizer = BertTokenizer.from_pretrained(pretrained_model_name_or_path=pretrained_model_name_or_path)
@@ -318,4 +327,4 @@ if __name__ == "__main__":
     print(my_model(**inputs).last_hidden_state[0][0][0])
     print(hf_model(**inputs).last_hidden_state[0][0][0])
     print(my_model(**inputs).last_hidden_state[0][0][0] == hf_model(**inputs).last_hidden_state[0][0][0])
-    print(torch.allclose(my_model(**inputs).last_hidden_state, hf_model(**inputs).last_hidden_state, atol=1e-4))
+    print(torch.allclose(my_model(**inputs).last_hidden_state, hf_model(**inputs).last_hidden_state, atol=1e-5))
