@@ -328,3 +328,4 @@ if __name__ == "__main__":
     print(hf_model(**inputs).last_hidden_state[0][0][0])
     print(my_model(**inputs).last_hidden_state[0][0][0] == hf_model(**inputs).last_hidden_state[0][0][0])
     print(torch.allclose(my_model(**inputs).last_hidden_state, hf_model(**inputs).last_hidden_state, atol=1e-5))
+    print(torch.max(my_model(**inputs).last_hidden_state - hf_model(**inputs).last_hidden_state))
